@@ -1,86 +1,42 @@
 ﻿@inherits LayoutComponentBase
-@using MudBlazor
-@using RBACSystem.Blazor.Services
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
-@inject AuthenticationStateProvider AuthStateProvider
-@inject NavigationManager NavigationManager
-@inject ILocalStorageService LocalStorage
+@inject IJSRuntime JSRuntime
 
 <MudThemeProvider/>
 <MudDialogProvider/>
 <MudSnackbarProvider/>
 
-<MudLayout>
-    <MudAppBar>
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
-        <MudText Typo="Typo.h6">RBAC System</MudText>
-        <MudSpacer/>
-        <MudMenu>
-            <ActivatorContent>
-                <MudButton EndIcon="@Icons.Material.Filled.ArrowDropDown">@UserEmail</MudButton>
-            </ActivatorContent>
-            <ChildContent>
-                <MudMenuItem OnClick="Logout">Logout</MudMenuItem>
-            </ChildContent>
-        </MudMenu>
-    </MudAppBar>
-    
-    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always">
-        <MudDrawerHeader>
-            <MudText Typo="Typo.h6">Menu</MudText>
-        </MudDrawerHeader>
-        <MudNavMenu>
-            @if (IsAdmin)
-            {
-                <MudNavLink Href="/users" Icon="@Icons.Material.Filled.People">User Management</MudNavLink>
-                <MudNavLink Href="/roles" Icon="@Icons.Material.Filled.Security">Role Management</MudNavLink>
-                <MudNavLink Href="/permissions" Icon="@Icons.Material.Filled.Lock">Permission Management</MudNavLink>
-            }
-            <MudNavLink Href="/profile" Icon="@Icons.Material.Filled.Person">Profile</MudNavLink>
-        </MudNavMenu>
-    </MudDrawer>
-    
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="my-4">
-            @Body
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
+@if (_isReady)
+{
+    <MudLayout>
+        <!-- Tu contenido existente -->
+        @Body
+    </MudLayout>
+}
+else
+{
+    <div class="loading-screen">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+    </div>
+}
 
 @code {
-    private bool _drawerOpen = true;
-    private string UserEmail { get; set; } = string.Empty;
-    private bool IsAdmin { get; set; }
-    
-    protected override async Task OnInitializedAsync()
+    private bool _isReady = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        
-        if (user.Identity?.IsAuthenticated ?? false)
+        if (firstRender)
         {
-            UserEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
-            IsAdmin = user.IsInRole("Admin");
+            try
+            {
+                await Task.Delay(100); // Pequeño delay para asegurar DOM
+                _isReady = true;
+                StateHasChanged();
+            }
+            catch
+            {
+                _isReady = true;
+                StateHasChanged();
+            }
         }
-        else
-        {
-            NavigationManager.NavigateTo("/login");
-        }
-        
-        await base.OnInitializedAsync();
-    }
-    
-    private void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-    
-    private async void Logout()
-    {
-        await LocalStorage.RemoveItemAsync("authToken");
-        await LocalStorage.RemoveItemAsync("user");
-        ((CustomAuthStateProvider)AuthStateProvider).NotifyUserLogout();
-        NavigationManager.NavigateTo("/login");
     }
 }

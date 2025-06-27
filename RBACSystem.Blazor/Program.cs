@@ -32,7 +32,7 @@ builder.Services.AddScoped(sp =>
 
 // Configure authentication
 builder.Services.AddOptions();
-builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+builder.Services.AddAuthorizationCore();
 
 await builder.Build().RunAsync();

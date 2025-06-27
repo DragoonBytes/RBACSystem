@@ -11,7 +11,6 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -77,12 +76,11 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient",
         builder => builder
-            .WithOrigins("https://localhost:7124") // Asegúrate de que esta URL coincida con tu cliente Blazor
+            .WithOrigins("https://localhost:7124")
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -93,14 +91,18 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "RBAC System API v1");
+        c.OAuthClientId("swagger-ui");
+        c.OAuthAppName("Swagger UI");
+    });
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors("AllowBlazorClient");
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors("AllowBlazorClient");
 
 // Add endpoints
 app.MapAuthEndpoints();
