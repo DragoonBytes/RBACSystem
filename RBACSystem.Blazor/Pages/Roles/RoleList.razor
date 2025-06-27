@@ -1,0 +1,211 @@
+﻿@page "/roles"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@using RBACSystem.Blazor.Models
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-4">Role Management</MudText>
+
+<MudButton Variant="Variant.Filled" 
+           Color="Color.Primary" 
+           StartIcon="@Icons.Material.Filled.Add"
+           OnClick="OpenCreateDialog"
+           Class="mb-4">
+    Create Role
+</MudButton>
+
+<MudCard>
+    <MudCardContent>
+        @if (roles == null)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+        }
+        else
+        {
+            <MudTable Items="@roles" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Description</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Description">@context.Description</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                      OnClick="@(() => OpenPermissionsDialog(context))"/>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudCardContent>
+</MudCard>
+
+<MudDialog @bind-IsVisible="createDialogVisible" MaxWidth="MaxWidth.Small">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Create New Role</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="newRole.Name" Label="Role Name" Required="true"/>
+        <MudTextField @bind-Value="newRole.Description" Label="Description" Class="mt-4"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateDialog">Cancel</MudButton>
+        <MudButton OnClick="CreateRole" Color="Color.Primary">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog @bind-IsVisible="permissionsDialogVisible" MaxWidth="MaxWidth.Small">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Manage Permissions for @selectedRole?.Name</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (allPermissions != null)
+        {
+            <MudList>
+                @foreach (var permission in allPermissions)
+                {
+                    <MudListItem>
+                        <MudCheckBox @bind-Checked="@permission.IsSelected" Label="@permission.Name"/>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="ClosePermissionsDialog">Cancel</MudButton>
+        <MudButton OnClick="SaveRolePermissions" Color="Color.Primary">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<ApplicationRole>? roles;
+    private List<PermissionItem>? allPermissions;
+    private ApplicationRole? selectedRole;
+    private bool createDialogVisible;
+    private bool permissionsDialogVisible;
+    private ApplicationRole newRole = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRoles();
+    }
+    
+    private async Task LoadRoles()
+    {
+        try
+        {
+            roles = await Http.GetFromJsonAsync<List<ApplicationRole>>("api/roles");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading roles: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private async Task LoadPermissions()
+    {
+        try
+        {
+            var permissions = await Http.GetFromJsonAsync<List<Permission>>("api/permissions");
+            var rolePermissions = await Http.GetFromJsonAsync<List<Permission>>($"api/permissions/{selectedRole?.Id}");
+            
+            allPermissions = permissions?.Select(p => new PermissionItem
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                IsSelected = rolePermissions?.Any(rp => rp.Id == p.Id) ?? false
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading permissions: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private void OpenCreateDialog()
+    {
+        newRole = new ApplicationRole();
+        createDialogVisible = true;
+    }
+    
+    private void CloseCreateDialog()
+    {
+        createDialogVisible = false;
+    }
+    
+    private async Task CreateRole()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/roles", newRole);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Role created successfully", Severity.Success);
+                await LoadRoles();
+                CloseCreateDialog();
+            }
+            else
+            {
+                Snackbar.Add("Error creating role", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private async void OpenPermissionsDialog(ApplicationRole role)
+    {
+        selectedRole = role;
+        await LoadPermissions();
+        permissionsDialogVisible = true;
+    }
+    
+    private void ClosePermissionsDialog()
+    {
+        permissionsDialogVisible = false;
+        selectedRole = null;
+    }
+    
+    private async Task SaveRolePermissions()
+    {
+        if (selectedRole == null || allPermissions == null) return;
+        
+        try
+        {
+            var selectedPermissionIds = allPermissions
+                .Where(p => p.IsSelected)
+                .Select(p => p.Id)
+                .ToList();
+                
+            var response = await Http.PutAsJsonAsync(
+                $"api/roles/{selectedRole.Id}/permissions", 
+                new { PermissionIds = selectedPermissionIds });
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Permissions updated successfully", Severity.Success);
+                ClosePermissionsDialog();
+            }
+            else
+            {
+                Snackbar.Add("Error updating permissions", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private class PermissionItem : Permission
+    {
+        public bool IsSelected { get; set; }
+    }
+}

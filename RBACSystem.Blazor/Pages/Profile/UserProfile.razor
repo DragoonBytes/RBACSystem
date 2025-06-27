@@ -1,0 +1,48 @@
+﻿@page "/profile"
+@using MudBlazor
+@using RBACSystem.Blazor.Models
+@using RBACSystem.Blazor.Services
+@inject ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-4">User Profile</MudText>
+
+<MudCard>
+    <MudCardContent>
+        @if (user is null)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="First Name" @bind-Value="user.FirstName" Variant="Variant.Outlined" Disabled="true"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Last Name" @bind-Value="user.LastName" Variant="Variant.Outlined" Disabled="true"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Email" @bind-Value="user.Email" Variant="Variant.Outlined" Disabled="true"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle1" Class="mt-4">Roles</MudText>
+                    @foreach (var role in user.Roles)
+                    {
+                        <MudChip Class="ma-1" Color="Color.Primary">@role</MudChip>
+                    }
+                </MudItem>
+            </MudGrid>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private RBACSystem.Blazor.Models.UserInfo? user; // Fully qualify the type to resolve ambiguity
+    
+    protected override async Task OnInitializedAsync()
+    {
+        user = await LocalStorage.GetItemAsync<RBACSystem.Blazor.Models.UserInfo>("user"); // Fully qualify here as well
+        await base.OnInitializedAsync();
+    }
+}

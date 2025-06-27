@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36109.1 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RBACSystem.API", "RBACSystem.API\RBACSystem.API.csproj", "{97B588C3-0F51-4B7D-B496-9234712D9F0C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RBACSystem.Blazor", "RBACSystem.Blazor\RBACSystem.Blazor.csproj", "{1CDBB0E4-CEED-4DBD-94B8-A3AAB52DF6A2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{97B588C3-0F51-4B7D-B496-9234712D9F0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97B588C3-0F51-4B7D-B496-9234712D9F0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97B588C3-0F51-4B7D-B496-9234712D9F0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97B588C3-0F51-4B7D-B496-9234712D9F0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CDBB0E4-CEED-4DBD-94B8-A3AAB52DF6A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CDBB0E4-CEED-4DBD-94B8-A3AAB52DF6A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CDBB0E4-CEED-4DBD-94B8-A3AAB52DF6A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CDBB0E4-CEED-4DBD-94B8-A3AAB52DF6A2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {09B1C800-D321-4797-A368-A90CB1035216}
+	EndGlobalSection
+EndGlobal

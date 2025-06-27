@@ -1,0 +1,87 @@
+﻿@page "/register"
+@using MudBlazor
+@using RBACSystem.Blazor.Services
+@using RBACSystem.Blazor.Models
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudCard Class="mx-auto" Style="max-width: 500px; margin-top: 100px;">
+    <MudCardHeader>
+        <MudText Typo="Typo.h4">Register</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudForm Model="@RegisterModel" @ref="form" @onsubmit="HandleRegister">
+            <MudTextField @bind-Value="@RegisterModel.FirstName" 
+                          Label="First Name" 
+                          Required="true" 
+                          RequiredError="First name is required"
+                          For="@(() => RegisterModel.FirstName)"/>
+            
+            <MudTextField @bind-Value="@RegisterModel.LastName" 
+                          Label="Last Name" 
+                          Required="true" 
+                          RequiredError="Last name is required"
+                          For="@(() => RegisterModel.LastName)"/>
+            
+            <MudTextField @bind-Value="@RegisterModel.Email" 
+                          Label="Email" 
+                          Required="true" 
+                          RequiredError="Email is required"
+                          For="@(() => RegisterModel.Email)"/>
+            
+            <MudTextField @bind-Value="@RegisterModel.Password" 
+                          Label="Password" 
+                          Required="true" 
+                          RequiredError="Password is required"
+                          InputType="InputType.Password"
+                          For="@(() => RegisterModel.Password)"/>
+            
+            <MudTextField @bind-Value="@RegisterModel.ConfirmPassword" 
+                          Label="Confirm Password" 
+                          Required="true" 
+                          RequiredError="Please confirm your password"
+                          InputType="InputType.Password"
+                          For="@(() => RegisterModel.ConfirmPassword)"/>
+            
+            <MudButton ButtonType="ButtonType.Submit" 
+                       Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       FullWidth="true"
+                       Class="mt-4">
+                Register
+            </MudButton>
+        </MudForm>
+    </MudCardContent>
+    <MudCardActions>
+        <MudText Class="mx-auto">Already have an account? <MudLink Href="/login">Login</MudLink></MudText>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    private RegisterModel RegisterModel { get; set; } = new();
+    private MudForm form;
+    
+    private async Task HandleRegister()
+    {
+        await form.Validate();
+        
+        if (form.IsValid)
+        {
+            var result = await AuthService.Register(RegisterModel);
+            
+            if (result.Success)
+            {
+                Snackbar.Add("Registration successful! Please login.", Severity.Success);
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    Snackbar.Add(error, Severity.Error);
+                }
+            }
+        }
+    }
+}

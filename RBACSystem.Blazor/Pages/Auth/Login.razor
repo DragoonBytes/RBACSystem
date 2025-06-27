@@ -1,0 +1,71 @@
+﻿@page "/login"  
+@using Microsoft.AspNetCore.Components.Authorization  
+@using MudBlazor  
+@using RBACSystem.Blazor.Services  
+@using RBACSystem.Blazor.Models  
+@inject AuthService AuthService  
+@inject NavigationManager NavigationManager  
+@inject AuthenticationStateProvider AuthStateProvider  
+@inject ILocalStorageService LocalStorage  
+@inject ISnackbar Snackbar  
+
+<MudCard Class="mx-auto" Style="max-width: 500px; margin-top: 100px;">  
+    <MudCardHeader>  
+        <MudText Typo="Typo.h4">Login</MudText>  
+    </MudCardHeader>  
+    <MudCardContent>  
+        <MudForm Model="@LoginModel" @ref="form" @onsubmit="HandleLogin">  
+            <MudTextField @bind-Value="LoginModel.Email"   
+                          Label="Email"   
+                          Required="true"   
+                          RequiredError="Email is required"  
+                          For="@(() => LoginModel.Email)"/>  
+              
+            <MudTextField @bind-Value="LoginModel.Password"   
+                          Label="Password"   
+                          Required="true"   
+                          RequiredError="Password is required"  
+                          InputType="InputType.Password"  
+                          For="@(() => LoginModel.Password)"/>  
+              
+            <MudButton ButtonType="ButtonType.Submit"   
+                       Variant="Variant.Filled"   
+                       Color="Color.Primary"   
+                       FullWidth="true"  
+                       Class="mt-4">  
+                Login  
+            </MudButton>  
+        </MudForm>  
+    </MudCardContent>  
+    <MudCardActions>  
+        <MudText Class="mx-auto">Don't have an account? <MudLink Href="/register">Register</MudLink></MudText>  
+    </MudCardActions>  
+</MudCard>  
+
+@code {  
+    private RBACSystem.Blazor.Models.LoginModel LoginModel { get; set; } = new();
+    private MudForm form;  
+      
+    private async Task HandleLogin()  
+    {  
+        await form.Validate();  
+          
+        if (form.IsValid)  
+        {  
+            var result = await AuthService.Login(LoginModel);  
+              
+            if (result.Success)  
+            {  
+                await LocalStorage.SetItemAsync("authToken", result.Token);  
+                await LocalStorage.SetItemAsync("user", result.User);  
+                ((CustomAuthStateProvider)AuthStateProvider).NotifyUserAuthentication(result.Token);  
+                Snackbar.Add("Login successful", Severity.Success);  
+                NavigationManager.NavigateTo("/");  
+            }  
+            else  
+            {  
+                Snackbar.Add(result.Error, Severity.Error);  
+            }  
+        }  
+    }  
+}

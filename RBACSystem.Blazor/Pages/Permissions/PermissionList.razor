@@ -1,0 +1,110 @@
+﻿@page "/permissions"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@using RBACSystem.Blazor.Models
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-4">Permission Management</MudText>
+
+<MudButton Variant="Variant.Filled" 
+           Color="Color.Primary" 
+           StartIcon="@Icons.Material.Filled.Add"
+           OnClick="OpenCreateDialog"
+           Class="mb-4">
+    Create Permission
+</MudButton>
+
+<MudCard>
+    <MudCardContent>
+        @if (permissions == null)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+        }
+        else
+        {
+            <MudTable Items="@permissions" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Description</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Description">@context.Description</MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudCardContent>
+</MudCard>
+
+<MudDialog @bind-IsVisible="createDialogVisible" MaxWidth="MaxWidth.Small">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Create New Permission</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="newPermission.Name" Label="Permission Name" Required="true"/>
+        <MudTextField @bind-Value="newPermission.Description" Label="Description" Class="mt-4"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateDialog">Cancel</MudButton>
+        <MudButton OnClick="CreatePermission" Color="Color.Primary">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<Permission>? permissions;
+    private bool createDialogVisible;
+    private Permission newPermission = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPermissions();
+    }
+    
+    private async Task LoadPermissions()
+    {
+        try
+        {
+            permissions = await Http.GetFromJsonAsync<List<Permission>>("api/permissions");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading permissions: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    private void OpenCreateDialog()
+    {
+        newPermission = new Permission();
+        createDialogVisible = true;
+    }
+    
+    private void CloseCreateDialog()
+    {
+        createDialogVisible = false;
+    }
+    
+    private async Task CreatePermission()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/permissions", newPermission);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Permission created successfully", Severity.Success);
+                await LoadPermissions();
+                CloseCreateDialog();
+            }
+            else
+            {
+                Snackbar.Add("Error creating permission", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+}

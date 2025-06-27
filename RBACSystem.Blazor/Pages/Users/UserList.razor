@@ -1,0 +1,95 @@
+﻿@page "/users"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@using RBACSystem.Blazor.Models
+@using RBACSystem.Blazor.Services
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<MudText Typo="Typo.h4" Class="mb-4">User Management</MudText>
+
+<!-- Resto de tu interfaz de usuario -->
+
+@code {
+    private List<RBACSystem.Blazor.Models.UserInfo>? users;
+    private RBACSystem.Blazor.Models.UserInfo? selectedUser;
+    private bool editDialogVisible;
+    private List<string> allRoles = new();
+    private List<string> selectedRoles = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+        await LoadRoles();
+    }
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            users = await Http.GetFromJsonAsync<List<RBACSystem.Blazor.Models.UserInfo>>("api/users");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading users: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadRoles()
+    {
+        try
+        {
+            var roles = await Http.GetFromJsonAsync<List<ApplicationRole>>("api/roles");
+            allRoles = roles?.Select(r => r.Name!).ToList() ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading roles: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void EditUser(string userId)
+    {
+        selectedUser = users?.FirstOrDefault(u => u.Id == userId);
+        selectedRoles = selectedUser?.Roles?.ToList() ?? new List<string>();
+        editDialogVisible = true;
+    }
+
+    private void CloseEditDialog()
+    {
+        editDialogVisible = false;
+        selectedUser = null;
+    }
+
+    private async Task SaveUserRoles()
+    {
+        if (selectedUser == null) return;
+        
+        try
+        {
+            var request = new { Roles = selectedRoles };
+            
+            var response = await Http.PutAsJsonAsync(
+                $"api/users/{selectedUser.Id}/roles", 
+                request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Roles updated successfully", Severity.Success);
+                await LoadUsers();
+                CloseEditDialog();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"Error updating roles: {error}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+}

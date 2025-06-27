@@ -1,0 +1,86 @@
+﻿@inherits LayoutComponentBase
+@using MudBlazor
+@using RBACSystem.Blazor.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject ILocalStorageService LocalStorage
+
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar>
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
+        <MudText Typo="Typo.h6">RBAC System</MudText>
+        <MudSpacer/>
+        <MudMenu>
+            <ActivatorContent>
+                <MudButton EndIcon="@Icons.Material.Filled.ArrowDropDown">@UserEmail</MudButton>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem OnClick="Logout">Logout</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+    </MudAppBar>
+    
+    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Menu</MudText>
+        </MudDrawerHeader>
+        <MudNavMenu>
+            @if (IsAdmin)
+            {
+                <MudNavLink Href="/users" Icon="@Icons.Material.Filled.People">User Management</MudNavLink>
+                <MudNavLink Href="/roles" Icon="@Icons.Material.Filled.Security">Role Management</MudNavLink>
+                <MudNavLink Href="/permissions" Icon="@Icons.Material.Filled.Lock">Permission Management</MudNavLink>
+            }
+            <MudNavLink Href="/profile" Icon="@Icons.Material.Filled.Person">Profile</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+    
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="my-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private string UserEmail { get; set; } = string.Empty;
+    private bool IsAdmin { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            UserEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
+            IsAdmin = user.IsInRole("Admin");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+        
+        await base.OnInitializedAsync();
+    }
+    
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+    
+    private async void Logout()
+    {
+        await LocalStorage.RemoveItemAsync("authToken");
+        await LocalStorage.RemoveItemAsync("user");
+        ((CustomAuthStateProvider)AuthStateProvider).NotifyUserLogout();
+        NavigationManager.NavigateTo("/login");
+    }
+}
