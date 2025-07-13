@@ -38,11 +38,11 @@
 </MudCard>
 
 @code {
-    private RBACSystem.Blazor.Models.UserInfo? user; // Fully qualify the type to resolve ambiguity
+    private RBACSystem.Blazor.Models.UserInfo? user;
     
     protected override async Task OnInitializedAsync()
     {
-        user = await LocalStorage.GetItemAsync<RBACSystem.Blazor.Models.UserInfo>("user"); // Fully qualify here as well
+        user = await LocalStorage.GetItemAsync<RBACSystem.Blazor.Models.UserInfo>("user");
         await base.OnInitializedAsync();
     }
 }

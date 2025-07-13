@@ -7,6 +7,5 @@ public class ApplicationRole : IdentityRole
 {
     public string? Description { get; set; }
 
-    // Agrega esta propiedad para la relación muchos-a-muchos
     public ICollection<Permission> Permissions { get; set; } = new List<Permission>();
 }

@@ -104,13 +104,11 @@ app.UseCors("AllowBlazorClient");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Add endpoints
 app.MapAuthEndpoints();
 app.MapUserManagementEndpoints();
 app.MapRoleManagementEndpoints();
 app.MapPermissionEndpoints();
 
-// Apply migrations and seed initial data
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

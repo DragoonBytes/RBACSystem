@@ -13,7 +13,6 @@ public static class UserManagementEndpoints
     {
         var userGroup = app.MapGroup("/api/users").RequireAuthorization();
 
-        // ... otros endpoints ...
 
         userGroup.MapPut("/{id}/roles", async (
             string id,

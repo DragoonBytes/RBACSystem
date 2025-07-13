@@ -8,7 +8,6 @@
 @if (_isReady)
 {
     <MudLayout>
-        <!-- Tu contenido existente -->
         @Body
     </MudLayout>
 }
@@ -28,7 +27,7 @@ else
         {
             try
             {
-                await Task.Delay(100); // Pequeño delay para asegurar DOM
+                await Task.Delay(100);
                 _isReady = true;
                 StateHasChanged();
             }
